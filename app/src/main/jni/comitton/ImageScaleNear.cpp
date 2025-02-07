@@ -11,8 +11,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -29,8 +29,8 @@ void *CreateScaleNear_ThreadFunc(void *param)
 
 //	LOGD("CreateScaleNear_ThreadFund : st=%d, ed=%d, sw=%d, sh=%d, ow=%d, oh=%d", stindex, edindex, SclWidth, SclHeight, OrgWidth, OrgHeight);
 
-	WORD *buffptr = NULL;
-	WORD *orgbuff1;
+	LONG *buffptr = NULL;
+	LONG *orgbuff1;
 
 	int		sx;	// 元画像の参照x座標
 	int		sy;	// 元画像の参照x座標

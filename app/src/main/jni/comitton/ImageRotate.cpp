@@ -10,8 +10,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -27,8 +27,8 @@ void *ImageRotate_ThreadFunc(void *param)
 	int OrgHeight  = range[5];
 	int RotateMode = range[6];
 
-	WORD *buffptr = NULL;
-	WORD *orgbuff1;
+	LONG *buffptr = NULL;
+	LONG *orgbuff1;
 
 	int		xx;	// サイズ変更後のx座標
 	int		yy;	// サイズ変更後のy座標

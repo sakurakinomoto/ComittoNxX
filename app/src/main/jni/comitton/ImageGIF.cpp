@@ -66,17 +66,17 @@ void DGifSetData(WORD *buffptr, GifPixelType *pLineBuf, int yy, int width, Color
         int gg = color->Green;
         int bb = color->Blue;
 
-        if (rr < 0xF8) {
-            rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-        }
-        if (gg < 0xFC) {
-            gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-        }
-        if (bb < 0xF8) {
-            bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-        }
+//        if (rr < 0xF8) {
+//            rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
+//        }
+//        if (gg < 0xFC) {
+//            gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
+//        }
+//        if (bb < 0xF8) {
+//            bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
+//        }
 
-        buffptr[xx] = MAKE565(rr, gg, bb);
+        buffptr[xx] = MAKE8888(rr, gg, bb);
     }
     return;
 }
@@ -90,8 +90,8 @@ int LoadImageGif(int loadCommand, IMAGEDATA *pData, int page, int scale, WORD *c
     int buffindex;
     int buffpos;
     int linesize;
-    WORD **pBuffPtrs = NULL;
-    WORD *buffptr;
+    LONG **pBuffPtrs = NULL;
+    LONG *buffptr;
 
     int row, col, swidth, sheight, width, height, ExtCode;
 
@@ -147,7 +147,7 @@ int LoadImageGif(int loadCommand, IMAGEDATA *pData, int page, int scale, WORD *c
 
                 pLineBuff = (GifPixelType*)malloc(sizeof(GifPixelType) * width);
                 pBackColor = (GifPixelType*)malloc(sizeof(GifPixelType) * width);
-                pBuffPtrs = (WORD**)malloc(sizeof(WORD*) * height);
+                pBuffPtrs = (LONG**)malloc(sizeof(LONG*) * height);
 
                 // カラーマップ
                 ColorMap = (GifFile->Image.ColorMap ? GifFile->Image.ColorMap : GifFile->SColorMap);
