@@ -40,6 +40,7 @@ import src.comitton.stream.TextManager;
 import src.comitton.stream.TextManager.MidashiData;
 import src.comitton.view.GuideView;
 import src.comitton.view.MyTextView;
+import src.comitton.filelist.FileSelectList;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -260,7 +261,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 	private boolean mPageModeIn = false; // ページ選択中の操作エリア外フラグ
 	private boolean mPinchOn = false;
 	private boolean mPinchDown = false;
-	private int mPinchScale = 100;
+	private int mPinchScale;
 	private int mPinchScaleSel;
 	private int mPinchCount;
 	private long mPinchTime;
@@ -534,12 +535,52 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		saveLastFile();
 
 		Log.d("TextActivity", "onCreate: mRestorePageRate を取得します.");
-		mRestorePageRate = mSharedPreferences.getFloat(DEF.createUrl(mFilePath + mTextName, mUser, mPass) + "#pageRate", (float)DEF.PAGENUMBER_UNREAD);
 		Log.d("TextActivity", "onCreate: pageRate を設定します.");
-		mCurrentPageRate = (mPageRate != (float)DEF.PAGENUMBER_UNREAD) ? mPageRate : (mRestorePageRate != (float)DEF.PAGENUMBER_UNREAD ? mRestorePageRate : 0f);
+		if	(mTextName.equals("META-INF/container.xml"))	{
+			mRestorePage = mSharedPreferences.getInt(DEF.createUrl(mFilePath, mUser, mPass), DEF.PAGENUMBER_UNREAD);
+		}
+		else	{
+			mRestorePage = mSharedPreferences.getInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), DEF.PAGENUMBER_UNREAD);
+		}
+		int maxpage = mRestorePage / 100000;
+		int	state = mRestorePage % 100000;
+		if	(maxpage == 0)	{
+			//	最大数が0の場合は補完する
+			if	(mTextName.equals("META-INF/container.xml"))	{
+				int openmode = 0;
+				// ファイルリストの読み込み
+				openmode = ImageManager.OPENMODE_TEXTVIEW;
+				mImageMgr = new ImageManager(this.mActivity, mPath, mFileName, mUser, mPass, 0, mHandler, true, openmode, 1);
+				mImageMgr.LoadImageList(0, 0, 0);
+				mTextMgr = new TextManager(mImageMgr, "META-INF/container.xml", mUser, mPass, mHandler, mActivity, FileData.FILETYPE_EPUB);
+				FileSelectList.SetReadConfig(mSharedPreferences,mTextMgr);
+				maxpage = mTextMgr.length();
+			}
+			else	{
+				int openmode = 0;
+				// ファイルリストの読み込み
+				openmode = ImageManager.OPENMODE_TEXTVIEW;
+				mImageMgr = new ImageManager(this.mActivity, mFilePath, "", mUser, mPass, 0, mHandler, true, openmode, 1);
+				mImageMgr.LoadImageList(0, 0, 0);
+				mTextMgr = new TextManager(mImageMgr, mTextName, mUser, mPass, mHandler, mActivity, FileData.FILETYPE_TXT);
+				FileSelectList.SetReadConfig(mSharedPreferences,mTextMgr);
+				maxpage = mTextMgr.length();
+			}
+			if	(mRestorePage == -2)	state = maxpage;
+			if	(mRestorePage == -1)	state = 0;
+			//	再計算する
+			mRestorePageRate = (float)state / (float)maxpage;
+		} else if (state >= (maxpage - 1))	{
+			//	最大ページ数に達した場合は既読にする
+			mRestorePageRate = 1f;
+		} else {
+			//	再計算する
+			mRestorePageRate = (float)state / (float)maxpage;
+		}
+		mRestorePage = state + maxpage * 100000;
+		mCurrentPage = (mPage != DEF.PAGENUMBER_UNREAD) ? mPage : state;
+		mCurrentPageRate = (float)mCurrentPage / (float)maxpage;
 		Log.d("TextActivity", "onCreate: mCurrentPageRate=" + mCurrentPageRate);
-		mRestorePage = mSharedPreferences.getInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), DEF.PAGENUMBER_UNREAD);
-		mCurrentPage = (mPage != DEF.PAGENUMBER_UNREAD) ? mPage : (mRestorePage != DEF.PAGENUMBER_UNREAD ? mRestorePage : 0);
 		mTextView.setOnTouchListener(this);
 
 		// プログレスダイアログ準備
@@ -1086,7 +1127,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 			return;
 		}
 
-		mPinchScale = mTextView.TextScaling();
+		mTextView.TextScaling();
 		this.updateOverSize();
 		return;
 	}
@@ -1098,7 +1139,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		mScaleMode = mode;
 		mTextView.setTextScale(mScaleMode, mPinchScale);
 		// イメージ拡大縮小
-		mPinchScale = mTextView.TextScaling();
+		mTextView.TextScaling();
 
 		this.updateOverSize();
 
@@ -1177,7 +1218,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
     						// 100%にする
     						// 任意スケーリング変更中
     						mPinchOn = true;
-    						mPinchScaleSel = 100;
+    						mPinchScaleSel = mPinchScale;
     					}
     				}
     				else {
@@ -1265,9 +1306,14 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
     					// テキストモード
 						mTextView.lockDraw();
     					mTextView.setTextScale(DEF.SCALE_PINCH, mPinchScale);
-    					mPinchScale = mTextView.TextScaling();
+						mTextView.TextScaling();
     					this.updateOverSize();
     					mTextView.update(true);
+
+						Editor ed = mSharedPreferences.edit();
+						ed.putString(DEF.KEY_PinchScaleText, Integer.toString(mPinchScale));
+						ed.commit();
+
     				}
     			}
     			return true;
@@ -2821,6 +2867,8 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		mTimePos = SetImageActivity.getTimePos(sharedPreferences); // 時刻と充電表示位置
 		mTimeSize = DEF.calcPnumSizePix(SetImageActivity.getTimeSize(sharedPreferences), mDensity); // 時刻と充電表示サイズ
 		mTimeColor = SetImageActivity.getTimeColor(sharedPreferences); // 時刻と充電表示色
+		mPinchScale = SetTextActivity.getPinScale(sharedPreferences);
+		mPinchScaleSel = mPinchScale;
 
 		if (mGuideView != null) {
 			mGuideView.setTimeFormat(mTimeDisp, mTimeFormat, mTimePos, mTimeSize, mTimeColor);
@@ -2997,12 +3045,10 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		float savePageRate = (float)mCurrentPage / mTextMgr.length();
 		if (mTextMgr.length() <= mCurrentPage + 1) {
 			// 既読
-			savePage = DEF.PAGENUMBER_READ;
 			savePageRate = (float)DEF.PAGENUMBER_READ;
 		}
 		else if (mDispMode == DEF.DISPMODE_TX_DUAL && mTextMgr.length() <= mCurrentPage + 2) {
 			// 見開きの場合は1ページ前でも既読
-			savePage = DEF.PAGENUMBER_READ;
 			savePageRate = (float)DEF.PAGENUMBER_READ;
 		}
 		else if (savePage < 0) {
@@ -3010,8 +3056,26 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 			savePage = 0;
 			savePageRate = 0f;
 		}
-		ed.putInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), savePage);
-		ed.putFloat(DEF.createUrl(mFilePath + mTextName, mUser, mPass) + "#pageRate", savePageRate);
+		long state;
+		long maxpage;
+		if	(mTextName.equals("META-INF/container.xml"))	{
+	        state = mSharedPreferences.getInt(DEF.createUrl(mFilePath, mUser, mPass), DEF.PAGENUMBER_UNREAD);
+			Log.d("TextActivity","mFilePath=" + mFilePath + ", savePage=" + savePage + ", state=" + state);
+	        maxpage = state / 100000;
+	        if	(maxpage == 0)	{
+				maxpage = mTextMgr.length();
+			}
+			ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), (int)(maxpage * 100000 + savePage));
+		}
+		else	{
+	        state = mSharedPreferences.getInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), DEF.PAGENUMBER_UNREAD);
+			Log.d("TextActivity","mFilePath=" + mFilePath + ", mTextName=" + mTextName + ", savePage=" + savePage + ", state=" + state);
+	        maxpage = state / 100000;
+	        if	(maxpage == 0)	{
+				maxpage = mTextMgr.length();
+			}
+			ed.putInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), (int)(maxpage * 100000 + savePage));
+		}
 		ed.commit();
 	}
 
@@ -3020,12 +3084,6 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		if (mImageMgr != null) {
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 			Editor ed = sp.edit();
-			if (mRestorePageRate == DEF.PAGENUMBER_UNREAD) {
-				ed.remove(DEF.createUrl(mFilePath + mTextName, mUser, mPass) + "#pageRate");
-			}
-			else {
-				ed.putFloat(DEF.createUrl(mFilePath + mTextName, mUser, mPass) + "#pageRate", mRestorePageRate);
-			}
 			if (mRestorePage == DEF.PAGENUMBER_UNREAD) {
 				ed.remove(DEF.createUrl(mFilePath + mTextName, mUser, mPass));
 			}
