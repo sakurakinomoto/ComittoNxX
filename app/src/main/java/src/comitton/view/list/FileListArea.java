@@ -339,6 +339,20 @@ public class FileListArea extends ListArea implements Handler.Callback {
 
 							if (bmMark != null) {
 								canvas.drawBitmap(bmMark, x + mIconWidth - mMarkSizeW, y + mIconHeight - mMarkSizeH, mBitmapPaint);
+								if ((fd.getState() >= 0) && (fd.getSize() > 0)) {
+									String str = (int)((double)fd.getState() / (double)fd.getSize() * 100) + "%";
+									int loadingSize = Math.min(mIconWidth, mIconHeight) / 5;
+									mBitmapPaint.setTextSize(loadingSize);
+									mBitmapPaint.setStyle(Paint.Style.STROKE);
+									mBitmapPaint.setStrokeWidth(2.0f); 
+									mBitmapPaint.setColor(Color.DKGRAY);
+									int text_x = x + mIconWidth - loadingSize;
+									int text_y = y + (mIconHeight + loadingSize) / 2 - loadingSize / 4;
+									canvas.drawText(str, text_x, text_y, mBitmapPaint);
+									mBitmapPaint.setStyle(Paint.Style.FILL);
+									mBitmapPaint.setColor(color);
+									canvas.drawText(str, text_x, text_y, mBitmapPaint);
+								}
 							}
 						}
 						else {
@@ -351,7 +365,7 @@ public class FileListArea extends ListArea implements Handler.Callback {
 
 							// 中央
 							mBitmapPaint.setStrokeWidth(1.0f);
-							mBitmapPaint.setStyle(Style.FILL);
+							mBitmapPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 							mBitmapPaint.setColor(Color.DKGRAY);
 							canvas.drawText(str, text_x + 1, text_y + 1, mBitmapPaint);
 
@@ -665,6 +679,21 @@ public class FileListArea extends ListArea implements Handler.Callback {
 
 						if (bmMark != null) {
                             canvas.drawBitmap(bmMark, x + dstX + dstWidth - mMarkSizeW, y + iconHeight - mMarkSizeH, mBitmapPaint);
+							if ((fd.getState() >= 0) && (fd.getSize() > 0)) {
+								String str = (int)((double)fd.getState() / (double)fd.getSize() * 100) + "%";
+								int loadingSize = Math.min(dstX + dstWidth, iconHeight) / 5;
+								mBitmapPaint.setTextSize(loadingSize);
+								mBitmapPaint.setStyle(Paint.Style.STROKE);
+								mBitmapPaint.setStrokeWidth(2.0f); 
+								mBitmapPaint.setColor(Color.DKGRAY);
+								int text_x = x + iconWidth - loadingSize;
+								int text_y = y + (iconHeight + loadingSize) / 2 - loadingSize / 4;
+
+								canvas.drawText(str, text_x, text_y, mBitmapPaint);
+								mBitmapPaint.setStyle(Paint.Style.FILL);
+								mBitmapPaint.setColor(color);
+								canvas.drawText(str, text_x, text_y, mBitmapPaint);
+							}
 						}
 					}
 					else {
@@ -677,7 +706,7 @@ public class FileListArea extends ListArea implements Handler.Callback {
 
 						// 中央
 						mBitmapPaint.setStrokeWidth(1.0f);
-						mBitmapPaint.setStyle(Style.FILL);
+						mBitmapPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 						mBitmapPaint.setColor(Color.DKGRAY);
 						canvas.drawText(str, text_x + 1, text_y + 1, mBitmapPaint);
 
