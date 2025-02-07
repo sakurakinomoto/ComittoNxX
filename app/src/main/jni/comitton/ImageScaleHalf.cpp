@@ -11,8 +11,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -34,9 +34,9 @@ void *CreateScaleHalf_ThreadFunc(void *param)
 
 //	LOGD("CreateScaleHalf_ThreadFund : st=%d, ed=%d, sw=%d, sh=%d, ow=%d, oh=%d", stindex, edindex, SclWidth, SclHeight, OrgWidth, OrgHeight);
 
-	WORD *buffptr = NULL;
-	WORD *orgbuff1;
-	WORD *orgbuff2;
+	LONG *buffptr = NULL;
+	LONG *orgbuff1;
+	LONG *orgbuff2;
 
 	int		sx;	// 元画像の参照x座標
 	int		sy;	// 元画像の参照x座標
@@ -89,18 +89,8 @@ void *CreateScaleHalf_ThreadFunc(void *param)
 			gg = LIMIT_RGB(gg / 4);
 			bb = LIMIT_RGB(bb / 4);
 
-			// 切り捨ての値を分散
-			if (rr < 0xF8) {
-				rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-			}
-			if (gg < 0xFC) {
-				gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-			}
-			if (bb < 0xF8) {
-				bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-			}
 
-			buffptr[xx] = MAKE565(rr, gg, bb);
+			buffptr[xx] = MAKE8888(rr, gg, bb);
 		}
 		// 補完用の余裕
 		buffptr[-2] = buffptr[0];

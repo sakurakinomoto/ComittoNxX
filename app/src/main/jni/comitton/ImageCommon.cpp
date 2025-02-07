@@ -12,9 +12,9 @@
 
 extern IMAGEDATA	*gImageData;
 extern char			*gLoadBuffer;
-extern WORD			**gLinesPtr;
-extern WORD			**gDsLinesPtr;	// 行のポインタ保持
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gDsLinesPtr;	// 行のポインタ保持
+extern LONG			**gSclLinesPtr;
 
 extern long			gTotalPages;
 extern long			gLoadBuffSize;
@@ -75,7 +75,8 @@ int DrawBitmap(int page, int half, int x, int y, void *canvas, int width, int he
 	}
 
 	if (x > 0) {
-		pixels = pixels + x;
+		// 横方向は偶数でずらす
+		pixels = pixels + x * 2;
 		width -= x;
 	}
 	else if (x < 0) {
@@ -93,11 +94,14 @@ int DrawBitmap(int page, int half, int x, int y, void *canvas, int width, int he
 //	LOGD("DrawBitmap : x=%d, y=%d, w=%d, h=%d, s=%d, l=%d, d=%d, xp=%d, yp=%d", x, y, width, height, stride, lines, dots, xpos, ypos);
 
 	int		yy;
+	int	loopx;
+    int rgb;
+	LONG	*pixeldata;
 
 	int buffindex = -1;
 	int buffpos = 0;
 	int linesize = image_width + HOKAN_DOTS;
-	WORD *buffptr = NULL;
+	LONG *buffptr = NULL;
 
 	// バッファのスキップ
 	for (yy = 0 ; yy < ypos ; yy ++) {
@@ -133,7 +137,12 @@ int DrawBitmap(int page, int half, int x, int y, void *canvas, int width, int he
 			buffpos = 0;
 		}
 //		LOGD("DEBUG2:yy=%d, idx=%d, pos=%d, off=%d", yy, buffindex, buffpos, buffpos + xpos + HOKAN_DOTS / 2);
-		memcpy(pixels, &gBuffMng[buffindex].Buff[buffpos + xpos + HOKAN_DOTS / 2], dots * sizeof(WORD));
+		pixeldata = &gBuffMng[buffindex].Buff[buffpos + xpos + HOKAN_DOTS / 2];
+		for	(loopx = 0 ; loopx < dots ; loopx++)	{
+			rgb = *(pixeldata + loopx);
+			*(pixels + loopx * 2 + 0) = rgb & 0xffff;
+			*(pixels + loopx * 2 + 1) = (rgb >> 16) & 0xffff;
+		}
 
 		pixels = (WORD*)(((char*)pixels) + stride);
 		buffpos += linesize;
@@ -360,7 +369,8 @@ int DrawScaleBitmap(int page, int rotate, int s_x, int s_y, int s_cx, int s_cy, 
 							xi = OrgHeight - (ypos + 1);
 							yi = xpos[xx];
 						}
-						pixels[xx] = gDsLinesPtr[yi][xi];
+						pixels[xx * 2 + 0] = gDsLinesPtr[yi][xi] & 0xffff;
+						pixels[xx * 2 + 1] = ((gDsLinesPtr[yi][xi] >> 16) & 0xffff);
 					}
 				}
 			}
@@ -404,7 +414,8 @@ int DrawScaleBitmap(int page, int rotate, int s_x, int s_y, int s_cx, int s_cy, 
 							xi = OrgHeight - (ypos[yy] + 1);
 							yi = xpos;
 						}
-						pixels[yy] = gDsLinesPtr[yi][xi];
+						pixels[yy * 2 + 0] = gDsLinesPtr[yi][xi] & 0xffff;
+						pixels[yy * 2 + 1] = ((gDsLinesPtr[yi][xi] >> 16) & 0xffff);
 					}
 				}
 			}
@@ -449,7 +460,7 @@ int MemAlloc(int buffsize)
 	int		i;
 	for (i = 0 ; i < buffnum ; i ++) {
 		gBuffMng[i].Page = -1;	// 未使用状態に初期化
-		gBuffMng[i].Buff = (WORD*)malloc(BLOCKSIZE * sizeof(WORD));
+		gBuffMng[i].Buff = (LONG*)malloc(BLOCKSIZE * sizeof(LONG));
 		if (gBuffMng[i].Buff == NULL) {
 			LOGE("Initialize: malloc error.(Buff / index=%d)", i);
 			break;
@@ -468,7 +479,7 @@ int MemAlloc(int buffsize)
 	gSclBuffNum = 0;
 
 	// 保存先ラインポインタ確保
-	gSclLinesPtr = (WORD**)malloc(sizeof(WORD*) * MAX_LINES);
+	gSclLinesPtr = (LONG**)malloc(sizeof(LONG*) * MAX_LINES);
 	if (gSclLinesPtr == NULL) {
 		LOGE("Initialize: malloc error.(SclLineBuffPtr)");
 		ret = -5;
@@ -574,7 +585,7 @@ int ScaleMemAlloc(int linesize, int linenum)
 
 	// 不足分を確保
 	for (i = gSclBuffNum ; i < SCLBUFFNUM && i < gSclBuffNum + (buffnum - count) ; i ++) {
-		gSclBuffMng[i].Buff = (WORD*)malloc(BLOCKSIZE * sizeof(WORD));
+		gSclBuffMng[i].Buff = (LONG*)malloc(BLOCKSIZE * sizeof(LONG));
 		if (gSclBuffMng[i].Buff == NULL) {
 			LOGE("Initialize: malloc error.(SclBuffMng / index=%d)", i);
 			gSclBuffNum = i;
@@ -624,8 +635,8 @@ int ScaleMemLine(int SclHeight)
 		// 高さが今まで使っていた物よりも大きければ再確保
 		ScaleMemLineFree();
 
-		gLinesPtr = (WORD**)malloc(sizeof(WORD*) * (SclHeight + HOKAN_DOTS));
-		gDsLinesPtr = (WORD**)malloc(sizeof(WORD*) * SclHeight);
+		gLinesPtr = (LONG**)malloc(sizeof(LONG*) * (SclHeight + HOKAN_DOTS));
+		gDsLinesPtr = (LONG**)malloc(sizeof(LONG*) * SclHeight);
 
 		if (gLinesPtr == NULL || gDsLinesPtr == NULL) {
 			LOGE("ScaleMemLine: MAlloc Error.");
@@ -738,7 +749,7 @@ int SetBuff(int page, uint32_t width, uint32_t height, uint8_t *data, colorForma
     int buffpos = 0;
     int linesize = (width + HOKAN_DOTS);
     int ret = 0;
-    WORD *buffptr = NULL;
+    LONG *buffptr = NULL;
 
     int yy, xx, yd3, yd2;
     int rr, gg, bb;
@@ -782,13 +793,6 @@ int SetBuff(int page, uint32_t width, uint32_t height, uint8_t *data, colorForma
         yd2 = gDitherY_2bit[yy & 0x03];
 
         for (xx = 0 ; xx < width ; xx++) {
-            if (colorFormat == COLOR_FORMAT_RGB565) {
-                buffptr[xx] = *(WORD *)data; data += sizeof(WORD);
-            }
-            else {
-                if (colorFormat == COLOR_FORMAT_ARGB || colorFormat == COLOR_FORMAT_ABGR) {
-                    data++;
-                }
                 if (colorFormat == COLOR_FORMAT_RGB || colorFormat == COLOR_FORMAT_RGBA ||
                     colorFormat == COLOR_FORMAT_ARGB) {
                     rr = *data;
@@ -796,6 +800,7 @@ int SetBuff(int page, uint32_t width, uint32_t height, uint8_t *data, colorForma
                     gg = *data;
                     data++;
                     bb = *data;
+                    data++;
                     data++;
                 } else if (colorFormat == COLOR_FORMAT_BGR || colorFormat == COLOR_FORMAT_BGRA ||
                            colorFormat == COLOR_FORMAT_ABGR) {
@@ -805,8 +810,6 @@ int SetBuff(int page, uint32_t width, uint32_t height, uint8_t *data, colorForma
                     data++;
                     rr = *data;
                     data++;
-                }
-                if (colorFormat == COLOR_FORMAT_RGBA || colorFormat == COLOR_FORMAT_BGRA) {
                     data++;
                 }
                 if (colorFormat == COLOR_FORMAT_GRAYSCALE) {
@@ -814,18 +817,7 @@ int SetBuff(int page, uint32_t width, uint32_t height, uint8_t *data, colorForma
                     data++;
                 }
 
-                // 切り捨ての値を分散
-                if (rr < 0xF8) {
-                    rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-                }
-                if (gg < 0xFC) {
-                    gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-                }
-                if (bb < 0xF8) {
-                    bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-                }
-                buffptr[xx] = MAKE565(rr, gg, bb);
-            }
+                buffptr[xx] = MAKE8888(rr, gg, bb);
         }
 
         // 補完用の余裕
@@ -898,17 +890,8 @@ int SetBitmap(int page, uint32_t width, uint32_t height, uint8_t *data, colorFor
                 rr = gg = bb = *data; data++;
             }
 
-            // 切り捨ての値を分散
-            if (rr < 0xF8) {
-                rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-            }
-            if (gg < 0xFC) {
-                gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-            }
-            if (bb < 0xF8) {
-                bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-            }
-            buffptr[xx] = MAKE565(rr, gg, bb);
+            buffptr[xx * 2 + 0] = MAKE8888(rr, gg, bb) & 0xffff;
+            buffptr[xx * 2 + 1] = (MAKE8888(rr, gg, bb) >> 16) & 0xffff;
         }
 
         // go to next line

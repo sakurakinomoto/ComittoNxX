@@ -10,7 +10,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -23,8 +24,10 @@ void *ImageInvert_ThreadFunc(void *param)
 	int OrgWidth  = range[2];
 	int OrgHeight = range[3];
 
+	LONG *buffptr = NULL;
+
 	// 使用するバッファを保持
-	WORD *orgbuff;
+	LONG *orgbuff;
 
 	int		xx;	// x座標
 	int		yy;	// y座標
@@ -38,18 +41,21 @@ void *ImageInvert_ThreadFunc(void *param)
 			return (void*)-1;
 		}
 
+		// バッファ位置
+		buffptr = gSclLinesPtr[yy];
+
 		orgbuff = gLinesPtr[yy + HOKAN_DOTS / 2];
 
 		for (xx =  0 ; xx < OrgWidth + HOKAN_DOTS ; xx++) {
 			// 反転
-			orgbuff[xx] = orgbuff[xx] ^ 0xFFFF;
+			buffptr[xx - HOKAN_DOTS / 2] = orgbuff[xx] ^ 0xFFFFFF;
 		}
 
 		// 補完用の余裕
-		orgbuff[-2] = orgbuff[0];
-		orgbuff[-1] = orgbuff[0];
-		orgbuff[OrgWidth + 0] = orgbuff[OrgWidth - 1];
-		orgbuff[OrgWidth + 1] = orgbuff[OrgWidth - 1];
+		buffptr[-2] = buffptr[0];
+		buffptr[-1] = buffptr[0];
+		buffptr[OrgWidth + 0] = buffptr[OrgWidth - 1];
+		buffptr[OrgWidth + 1] = buffptr[OrgWidth - 1];
 	}
 	return 0;
 }
@@ -59,6 +65,21 @@ int ImageInvert(int Page, int Half, int Index, int OrgWidth, int OrgHeight)
 {
 //	LOGD("ImageInvert : p=%d, h=%d, i=%d, ow=%d, oh=%d", Page, Half, Index, OrgWidth, OrgHeight);
 	int ret = 0;
+
+	int linesize;
+
+	// ラインサイズ
+	linesize  = OrgWidth + HOKAN_DOTS;
+
+	//  サイズ変更画像待避用領域確保
+	if (ScaleMemAlloc(linesize, OrgHeight) < 0) {
+		return -6;
+	}
+
+	// データの格納先ポインタリストを更新
+	if (RefreshSclLinesPtr(Page, Half, Index, OrgHeight, linesize) < 0) {
+		return -7;
+	}
 
 	pthread_t thread[gMaxThreadNum];
 	int start = 0;

@@ -10,8 +10,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -31,12 +31,12 @@ void *ImageSharpen_ThreadFunc(void *param)
 	int OrgWidth  = range[2];
 	int OrgHeight = range[3];
 
-	WORD *buffptr = NULL;
+	LONG *buffptr = NULL;
 
 	// 使用するバッファを保持
-	WORD *orgbuff1;
-	WORD *orgbuff2;
-	WORD *orgbuff3;
+	LONG *orgbuff1;
+	LONG *orgbuff2;
+	LONG *orgbuff3;
 
 	int		xx;	// サイズ変更後のx座標
 	int		yy;	// サイズ変更後のy座標
@@ -62,7 +62,7 @@ void *ImageSharpen_ThreadFunc(void *param)
 
 		yd3 = gDitherY_3bit[yy & 0x07];
 		yd2 = gDitherY_2bit[yy & 0x03];
-		for (xx =  0 ; xx < OrgWidth ; xx++) {
+		for (xx =  0 ; xx < OrgWidth + HOKAN_DOTS ; xx++) {
 			// 
             rr -= RGB565_RED_256(orgbuff1[xx - 1]) * mAmount;
             rr -= RGB565_RED_256(orgbuff1[xx + 0]) * mAmount * 2;
@@ -102,18 +102,8 @@ void *ImageSharpen_ThreadFunc(void *param)
 			gg = LIMIT_RGB(gg);
 			bb = LIMIT_RGB(bb);
 
-			// 切り捨ての値を分散
-			if (rr < 0xF8) {
-				rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-			}
-			if (gg < 0xFC) {
-				gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-			}
-			if (bb < 0xF8) {
-				bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-			}
 
-			buffptr[xx] = MAKE565(rr, gg, bb);
+			buffptr[xx - HOKAN_DOTS / 2] = MAKE8888(rr, gg, bb);
 		}
 
 		// 補完用の余裕

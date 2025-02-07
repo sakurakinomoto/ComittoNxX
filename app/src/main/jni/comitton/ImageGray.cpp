@@ -10,7 +10,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -23,25 +24,27 @@ void *ImageGray_ThreadFunc(void *param)
 	int OrgWidth  = range[2];
 	int OrgHeight = range[3];
 
+	LONG *buffptr = NULL;
+
 	// 使用するバッファを保持
-	WORD *orgbuff;
+	LONG *orgbuff;
 
 	int		xx;	// x座標
 	int		yy;	// y座標
 
-	char	rs[32];
-	char	gs[64];
-	char	bs[32];
+	char	rs[256];
+	char	gs[256];
+	char	bs[256];
 
-	for (int i = 0 ; i < 32 ; i ++) {
+	for (int i = 0 ; i < 256 ; i ++) {
 		rs[i] = (int)(0.299f * 2.0f * i + 0.5f);
 //		LOGD("ImageGray : rs[%d]", rs[i]);
 	}
-	for (int i = 0 ; i < 64 ; i ++) {
+	for (int i = 0 ; i < 256 ; i ++) {
 		gs[i] = (int)(0.587f * i + 0.5f);
 //		LOGD("ImageGray : gs[%d]", gs[i]);
 	}
-	for (int i = 0 ; i < 32 ; i ++) {
+	for (int i = 0 ; i < 256 ; i ++) {
 		bs[i] = (int)(0.114f * 2.0f * i + 0.5f);
 //		LOGD("ImageGray : bs[%d]", bs[i]);
 	}
@@ -57,6 +60,9 @@ void *ImageGray_ThreadFunc(void *param)
 			return (void*)-1;
 		}
 
+		// バッファ位置
+		buffptr = gSclLinesPtr[yy];
+
 		orgbuff = gLinesPtr[yy + HOKAN_DOTS / 2];
 
 		for (xx =  0 ; xx < OrgWidth + HOKAN_DOTS ; xx++) {
@@ -65,15 +71,16 @@ void *ImageGray_ThreadFunc(void *param)
 			gg = RGB565_GREEN(orgbuff[xx]);
 			bb = RGB565_BLUE(orgbuff[xx]);
 			cc = rs[rr] + gs[gg] + bs[bb];
+			if	(cc > 255)	cc = 255;
 
-			orgbuff[xx] = REMAKE565(cc >> 1, cc, cc >> 1);
+			buffptr[xx - HOKAN_DOTS / 2] = MAKE8888(cc, cc, cc);
 		}
 
 		// 補完用の余裕
-		orgbuff[-2] = orgbuff[0];
-		orgbuff[-1] = orgbuff[0];
-		orgbuff[OrgWidth + 0] = orgbuff[OrgWidth - 1];
-		orgbuff[OrgWidth + 1] = orgbuff[OrgWidth - 1];
+		buffptr[-2] = buffptr[0];
+		buffptr[-1] = buffptr[0];
+		buffptr[OrgWidth + 0] = buffptr[OrgWidth - 1];
+		buffptr[OrgWidth + 1] = buffptr[OrgWidth - 1];
 	}
 	return 0;
 }
@@ -83,6 +90,21 @@ int ImageGray(int Page, int Half, int Index, int OrgWidth, int OrgHeight)
 {
 //	LOGD("ImageGray : p=%d, h=%d, i=%d, ow=%d, oh=%d", Page, Half, Index, OrgWidth, OrgHeight);
 	int ret = 0;
+
+	int linesize;
+
+	// ラインサイズ
+	linesize  = OrgWidth + HOKAN_DOTS;
+
+	//  サイズ変更画像待避用領域確保
+	if (ScaleMemAlloc(linesize, OrgHeight) < 0) {
+		return -6;
+	}
+
+	// データの格納先ポインタリストを更新
+	if (RefreshSclLinesPtr(Page, Half, Index, OrgHeight, linesize) < 0) {
+		return -7;
+	}
 
 	pthread_t thread[gMaxThreadNum];
 	int start = 0;

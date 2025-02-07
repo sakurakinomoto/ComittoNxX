@@ -10,8 +10,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -39,10 +39,10 @@ void *ImageBlur_ThreadFunc(void *param)
 	int		dotcnt;
 
 	// 使用するバッファを保持
-	WORD *orgbuff1;
-	WORD *orgbuff2;
+	LONG *orgbuff1;
+	LONG *orgbuff2;
 
-//	WORD *buffptr = NULL;
+	LONG *buffptr = NULL;
 
 	int raito = Zoom * Zoom / 100;
 //	LOGD("ImageBlur_ThreadFund : zoom=%d, raito=%d", Zoom, raito);
@@ -58,7 +58,7 @@ void *ImageBlur_ThreadFunc(void *param)
 		}
 
 		// バッファ位置
-//		buffptr = gSclLinesPtr[yy];
+		buffptr = gSclLinesPtr[yy];
 
 		orgbuff1 = gLinesPtr[yy + HOKAN_DOTS / 2 + 0];
 		orgbuff2 = gLinesPtr[yy + HOKAN_DOTS / 2 + 1];
@@ -66,7 +66,7 @@ void *ImageBlur_ThreadFunc(void *param)
 		yd3 = gDitherY_3bit[yy & 0x07];
 		yd2 = gDitherY_2bit[yy & 0x03];
 
-		for (int xx =  0 ; xx < Width ; xx++) {
+		for (int xx =  0 ; xx < Width + HOKAN_DOTS; xx++) {
 			rr1 =  RGB565_RED_256(orgbuff1[xx]);
 			gg1 =  RGB565_GREEN_256(orgbuff1[xx]);
 			bb1 =  RGB565_BLUE_256(orgbuff1[xx]);
@@ -89,24 +89,15 @@ void *ImageBlur_ThreadFunc(void *param)
 			bb = LIMIT_RGB((bb1 * raito + bb2 * (100 - raito) / 3) / 100);
 
 			// 切り捨ての値を分散
-			if (rr < 0xF8) {
-				rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-			}
-			if (gg < 0xFC) {
-				gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-			}
-			if (bb < 0xF8) {
-				bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-			}
 
-			orgbuff1[xx] = MAKE565(rr, gg, bb);
+			buffptr[xx - HOKAN_DOTS / 2] = MAKE8888(rr, gg, bb);
 		}
 
 		// 補完用の余裕
-		orgbuff1[-2] = orgbuff1[0];
-		orgbuff1[-1] = orgbuff1[0];
-		orgbuff1[Width + 0] = orgbuff1[Width - 1];
-		orgbuff1[Width + 1] = orgbuff1[Width - 1];
+		buffptr[-2] = buffptr[0];
+		buffptr[-1] = buffptr[0];
+		buffptr[Width + 0] = buffptr[Width - 1];
+		buffptr[Width + 1] = buffptr[Width - 1];
 	}
 //	LOGD("ImageBlur_ThreadFund : end");
 	return 0;
@@ -131,18 +122,20 @@ int ImageBlur(int Page, int Half, int Index, int OrgWidth, int OrgHeight, int Zo
 		Zoom = 50;
 	}
 
+	int linesize;
+
 	// ラインサイズ
-//	linesize  = OrgWidth + HOKAN_DOTS;
+	linesize  = OrgWidth + HOKAN_DOTS;
 
-//	//  サイズ変更画像待避用領域確保
-//	if (ScaleMemAlloc(linesize, OrgHeight) < 0) {
-//		return -6;
-//	}
+	//  サイズ変更画像待避用領域確保
+	if (ScaleMemAlloc(linesize, OrgHeight) < 0) {
+		return -6;
+	}
 
-//	// データの格納先ポインタリストを更新
-//	if (RefreshSclLinesPtr(Page, Half, Index, OrgHeight, linesize) < 0) {
-//		return -7;
-//	}
+	// データの格納先ポインタリストを更新
+	if (RefreshSclLinesPtr(Page, Half, Index, OrgHeight, linesize) < 0) {
+		return -7;
+	}
 
 	pthread_t thread[gMaxThreadNum];
 	int start = 0;

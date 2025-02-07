@@ -13,9 +13,9 @@ IMAGEDATA	*gImageData = NULL;
 long		gTotalPages = 0;
 long		gLoadBuffSize = 0;
 char		*gLoadBuffer = NULL;
-WORD		**gLinesPtr;
-WORD		**gDsLinesPtr;
-WORD		**gSclLinesPtr;	// 出力先ラインポインタ配列
+LONG		**gLinesPtr;
+LONG		**gDsLinesPtr;
+LONG		**gSclLinesPtr;	// 出力先ラインポインタ配列
 
 long		gBitmapBuffPos;
 
@@ -604,10 +604,6 @@ JNIEXPORT jint JNICALL Java_src_comitton_stream_CallImgLibrary_ImageGetBitmap (J
         return -3;
     }
 
-    if (info.format != ANDROID_BITMAP_FORMAT_RGB_565) {
-        LOGE("callImage: ImageGetBitmap: Bitmap format is not RGB_565 !");
-        return -4;
-    }
 
     if ((ret = AndroidBitmap_lockPixels(env, bitmap, &canvas)) < 0) {
         LOGE("callImage: ImageGetBitmap: AndroidBitmap_lockPixels() failed ! error=%d", ret);
@@ -835,10 +831,6 @@ JNIEXPORT jint JNICALL Java_src_comitton_stream_CallImgLibrary_ImageDraw (JNIEnv
 		return -2;
 	}
 
-	if (info.format != ANDROID_BITMAP_FORMAT_RGB_565) {
-		LOGE("callImage: ImageDraw : Bitmap format is not RGB_565 !");
-		return -3;
-	}
 
 	if ((ret = AndroidBitmap_lockPixels(env, bitmap, &canvas)) < 0) {
 		LOGE("callImage: ImageDraw : AndroidBitmap_lockPixels() failed ! error=%d", ret);
@@ -886,10 +878,6 @@ JNIEXPORT jint JNICALL Java_src_comitton_stream_CallImgLibrary_ImageScaleDraw (J
 		return -3;
 	}
 
-	if (info.format != ANDROID_BITMAP_FORMAT_RGB_565) {
-		LOGE("callImage: ImageScaleDraw : Bitmap format is not RGB_565 !");
-		return -4;
-	}
 
 	if ((ret = AndroidBitmap_lockPixels(env, bitmap, &canvas)) < 0) {
 		LOGE("callImage: ImageScaleDraw : AndroidBitmap_lockPixels() failed ! error=%d", ret);

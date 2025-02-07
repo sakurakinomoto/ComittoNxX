@@ -14,8 +14,8 @@
 //#define DEBUG
 
 extern IMAGEDATA	*gImageData;
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 
 extern BUFFMNG		*gBuffMng;
 extern long			gBuffNum;
@@ -162,9 +162,9 @@ int CreateScale(int Page, int Half, int SclWidth, int SclHeight, int left, int r
 				return ret;
 			}
 
-//			// 古いワークデータは削除
-//			EraseSclBuffMng(Index);
-//			Index ++;
+			// 古いワークデータは削除
+			EraseSclBuffMng(Index);
+			Index ++;
 		}
 	}
 
@@ -281,7 +281,9 @@ int CreateScale(int Page, int Half, int SclWidth, int SclHeight, int left, int r
 		if (ret < 0) {
 			return ret;
 		}
-		// 色の変化だけなのでワークデータは作成されない
+		// 古いワークデータは削除
+		EraseSclBuffMng(Index);
+		Index ++;
 	}
 
 	if (Invert > 0) {
@@ -296,7 +298,9 @@ int CreateScale(int Page, int Half, int SclWidth, int SclHeight, int left, int r
 		if (ret < 0) {
 			return ret;
 		}
-		// 反転だけなのでワークデータは作成されない
+		// 古いワークデータは削除
+		EraseSclBuffMng(Index);
+		Index ++;
 	}
 
 	if (Bright != 0 || Gamma != 0) {
@@ -311,7 +315,9 @@ int CreateScale(int Page, int Half, int SclWidth, int SclHeight, int left, int r
 		if (ret < 0) {
 			return ret;
 		}
-		// 色の調整だけなのでワークデータは作成されない
+		// 古いワークデータは削除
+		EraseSclBuffMng(Index);
+		Index ++;
 	}
 
 	CopySclBuffMngToBuffMng();
@@ -468,7 +474,7 @@ int CopySclBuffMngToBuffMng()
 			gBuffMng[buffindex].Half = gSclBuffMng[i].Half;
 			gBuffMng[buffindex].Size = gSclBuffMng[i].Size;
 			gBuffMng[buffindex].Index = 0;
-			memcpy(gBuffMng[buffindex].Buff, gSclBuffMng[i].Buff, BLOCKSIZE * sizeof(WORD));
+			memcpy(gBuffMng[buffindex].Buff, gSclBuffMng[i].Buff, BLOCKSIZE * sizeof(LONG));
 //			LOGD("CopySclBuffMngToBuffMng Ed : %d/%d -> %d/%d", i, gSclBuffNum, buffindex, gBuffNum);
 		}
 	}

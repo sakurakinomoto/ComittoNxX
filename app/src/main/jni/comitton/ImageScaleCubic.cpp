@@ -10,8 +10,8 @@
 
 #include "Image.h"
 
-extern WORD	**gLinesPtr;
-extern WORD	**gSclLinesPtr;
+extern LONG	**gLinesPtr;
+extern LONG	**gSclLinesPtr;
 extern int	gCancel;
 
 extern int			gMaxThreadNum;
@@ -70,12 +70,12 @@ void *CreateScaleCubic_ThreadFunc(void *param)
 	int		rr, gg, bb;
 	int		yd3, yd2;
 
-	WORD *buffptr = NULL;
+	LONG *buffptr = NULL;
 
-	WORD *orgbuff1;
-	WORD *orgbuff2;
-	WORD *orgbuff3;
-	WORD *orgbuff4;
+	LONG *orgbuff1;
+	LONG *orgbuff2;
+	LONG *orgbuff3;
+	LONG *orgbuff4;
 
 	int *x_index = gSclIntParam1;
 	int *x_pos   = gSclIntParam2;
@@ -145,19 +145,9 @@ void *CreateScaleCubic_ThreadFunc(void *param)
 			gg = LIMIT_RGB(gg);
 			bb = LIMIT_RGB(bb);
 
-			// 切り捨ての値を分散
-			if (rr < 0xF8) {
-				rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-			}
-			if (gg < 0xFC) {
-				gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-			}
-			if (bb < 0xF8) {
-				bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-			}
 
 			// buffptr[xx] = REMAKE565(rr, gg, bb);
-			buffptr[xx] = MAKE565(rr, gg, bb);
+			buffptr[xx] = MAKE8888(rr, gg, bb);
 		}
 		// 補完用の余裕
 		buffptr[-2] = buffptr[0];

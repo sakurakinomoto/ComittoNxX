@@ -11,8 +11,8 @@
 
 #include "Image.h"
 
-extern WORD			**gLinesPtr;
-extern WORD			**gSclLinesPtr;
+extern LONG			**gLinesPtr;
+extern LONG			**gSclLinesPtr;
 extern int			gCancel;
 
 extern int			gMaxThreadNum;
@@ -43,10 +43,10 @@ void *CreateScaleLinear_ThreadFunc(void *param)
 	int *d1   = gSclIntParam2;
 	int *d2   = gSclIntParam3;
 
-	WORD *buffptr = NULL;
+	LONG *buffptr = NULL;
 
-	WORD *orgbuff1;
-	WORD *orgbuff2;
+	LONG *orgbuff1;
+	LONG *orgbuff2;
 
 	long long syy;
 	int orgy;
@@ -107,22 +107,8 @@ void *CreateScaleLinear_ThreadFunc(void *param)
 
 // LOGD("CreateScaleLinear : x=%d, y=%d, rr=%d(%d,%d,%d,%d), gg=%d(%d,%d,%d,%d)", xx, yy, rr, r1, r2, r3, r4, gg, g1, g2, g3, g4);
 
-			// 切り捨ての値を分散
-			if (rr < 0xF8) {
-				rr = rr + gDitherX_3bit[rr & 0x07][(xx + yd3) & 0x07];
-			}
-			if (gg < 0xFC) {
-				gg = gg + gDitherX_2bit[gg & 0x03][(xx + yd2) & 0x03];
-			}
-//			if (gg < 0xF8) {
-//				gg = gg + gDitherX_3bit[gg & 0x07][(xx + yd3) & 0x07];
-//			}
-			if (bb < 0xF8) {
-				bb = bb + gDitherX_3bit[bb & 0x07][(xx + yd3) & 0x07];
-			}
 
-			buffptr[xx] = MAKE565(rr, gg, bb);
-//			buffptr[xx] = MAKE555(rr, gg, bb);
+			buffptr[xx] = MAKE8888(rr, gg, bb);
 		}
 		// 補完用の余裕
 		buffptr[-2] = buffptr[0];
