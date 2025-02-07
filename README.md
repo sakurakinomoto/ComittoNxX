@@ -41,7 +41,7 @@ ComittoNxX改造版はComittoNxXオリジナルをフォークしたオープン
 
 ## ダウンロード
 
-[Releases]([https://github.com/sakurakinomoto/ComittoNxX/releases]) よりご利用ください.  
+[Releases](https://github.com/sakurakinomoto/ComittoNxX/releases) よりご利用ください.  
 
 #### [NxD](https://github.com/Kdroidwin/cnxd/tree/cnxd) からの修正点
 
