@@ -363,11 +363,11 @@
     <string name="pageselect01">スライダーを表示</string>
     <string name="pageselect02">サムネイル</string>
     <string name="histnum00">保存しない</string>
-    <string name="histnum01">20</string>
-    <string name="histnum02">40</string>
-    <string name="histnum03">60</string>
-    <string name="histnum04">80</string>
-    <string name="histnum05">100</string>
+    <string name="histnum01">200</string>
+    <string name="histnum02">400</string>
+    <string name="histnum03">600</string>
+    <string name="histnum04">800</string>
+    <string name="histnum05">1000</string>
     <string name="scrlway00">横方向→縦方向</string>
     <string name="scrlway01">縦方向→横方向</string>
     <string name="mgncut00">なし</string>
