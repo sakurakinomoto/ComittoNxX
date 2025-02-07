@@ -363,11 +363,11 @@
     <string name="pageselect01">View slider</string>
     <string name="pageselect02">Thumbnail</string>
     <string name="histnum00">Not save</string>
-    <string name="histnum01">20</string>
-    <string name="histnum02">40</string>
-    <string name="histnum03">60</string>
-    <string name="histnum04">80</string>
-    <string name="histnum05">100</string>
+    <string name="histnum01">200</string>
+    <string name="histnum02">400</string>
+    <string name="histnum03">600</string>
+    <string name="histnum04">800</string>
+    <string name="histnum05">1000</string>
     <string name="scrlway00">Horizontal -> Direction</string>
     <string name="scrlway01">Direction -> Horizontal</string>
     <string name="mgncut00">None</string>
