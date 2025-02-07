@@ -1036,7 +1036,7 @@ public class MyTextView extends SurfaceView implements Handler.Callback, Surface
 			Bitmap bm = null;
 
 			option.inJustDecodeBounds = false;
-			option.inPreferredConfig = Config.RGB_565;
+			option.inPreferredConfig = Config.ARGB_8888;
 			try {
 				// ビットマップの読み込み
 				if (mImageMgr != null) {
@@ -2329,8 +2329,8 @@ public class MyTextView extends SurfaceView implements Handler.Callback, Surface
 		}
 		else if (mSclMode == DEF.SCALE_ORIGINAL) {
 			// 元サイズのまま
-			view_x = src_cx;
-			view_y = src_cy;
+			view_x = src_cx * mPinchScl / 100;
+			view_y = src_cy * mPinchScl / 100;
 		}
 		else if (mSclMode == DEF.SCALE_FIT_ALLMAX) {
 			// 縦横比無視で拡大
