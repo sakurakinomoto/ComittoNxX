@@ -1,8 +1,9 @@
-# ComittoNxX
+# ComittoNxX改造版
 
 <img src="app/src/main/res/drawable-hdpi/comittonxx.png" width="100" align="right" alt="logo">
 
-ComittoNxXはオープンソースの画像ビュワーです.  
+ComittoNxX改造版はComittoNxXオリジナルをフォークしたオープンソースの画像ビュワーです.
+基本動作はComittoNxXを受け継いでいます.
 対応バージョンはAndroid5.0以上15までです.
 
 - 対応する電子書籍ファイルの形式：  
