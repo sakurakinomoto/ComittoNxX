@@ -480,6 +480,8 @@ public class DEF {
 	public static final String KEY_MEMSIZE = "MemSize";
 	public static final String KEY_MEMNEXT = "MemNext";
 	public static final String KEY_MEMPREV = "MemPrev";
+	public static final String KEY_PinchScale = "PinchScale";
+	public static final String KEY_PinchScaleText = "PinchScaleText";
 
 	public static final String KEY_TOOLBAR_SIZE = "ToolbarSize";
 
@@ -1080,7 +1082,14 @@ public class DEF {
 
 	// 保持件数
 	static public int calcSaveNum(int val) {
-		return val * 20;
+		int calc_val = 0;
+		if (val == 0) calc_val = 0;
+		if (val == 1) calc_val = 50;
+		if (val == 2) calc_val = 100;
+		if (val == 3) calc_val = 200;
+		if (val == 4) calc_val = 500;
+		if (val == 5) calc_val = 1000;
+		return calc_val;
 	}
 
 	// サマリ文字列作成
