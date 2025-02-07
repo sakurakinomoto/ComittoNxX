@@ -143,8 +143,11 @@ public class FileData {
 
 	public static short getExtType(String filepath) {
 
-		if (filepath.endsWith(".zip") || filepath.endsWith(".cbz") || filepath.endsWith(".epub")) {
+		if (filepath.endsWith(".zip") || filepath.endsWith(".cbz")) {
 			return EXTTYPE_ZIP;
+		}
+		if (filepath.endsWith(".epub")) {
+			return EXTTYPE_EPUB;
 		}
 		if (filepath.endsWith(".rar") || filepath.endsWith(".cbr")) {
 			return EXTTYPE_RAR;
