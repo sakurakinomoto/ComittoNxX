@@ -33,12 +33,15 @@ import android.util.Log;
 import jcifs.smb.SmbFile;
 import src.comitton.common.DEF;
 import src.comitton.common.FileAccess;
+import src.comitton.config.SetImageDetailActivity;
 import src.comitton.data.FileData;
 import src.comitton.exception.FileAccessException;
+import src.comitton.activity.ImageActivity;
 
 import android.annotation.SuppressLint;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.preference.PreferenceManager;
 
 public class ImageManager extends InputStream implements Runnable {
 	public static final int OPENMODE_VIEW = 0;
@@ -3107,7 +3110,7 @@ public class ImageManager extends InputStream implements Runnable {
 				// 縮小してファイル読込
 				if (debug) {Log.d("ImageManager", "GetBitmapFromPath: イメージデータを取得します.");}
 				option.inJustDecodeBounds = false;
-				option.inPreferredConfig = Bitmap.Config.RGB_565;
+				option.inPreferredConfig = Config.RGB_565;
 				if (debug) {Log.d("ImageManager", "GetBitmapFromPath: イメージデータ取得(BitmapFactory)を実行します. pathname=" + filepath);}
 				try {
 					bm = BitmapFactory.decodeFile(filepath, option);
@@ -3669,7 +3672,7 @@ public class ImageManager extends InputStream implements Runnable {
 		Bitmap bm = null;
 
 		option.inJustDecodeBounds = false;
-		option.inPreferredConfig = Config.RGB_565;
+		option.inPreferredConfig = Config.ARGB_8888;
 		InputStream inputStream;
 
 		ZipInputStream zipStream = null;
@@ -3782,7 +3785,7 @@ public class ImageManager extends InputStream implements Runnable {
 				int Outheight = pdfPage.getHeight()/ sampleSize;
 
 				//PdfRenderer.Pageの情報を使って空の描画用Bitmapインスタンスを作成する。
-				bm = Bitmap.createBitmap(pdfPage.getWidth() , pdfPage.getHeight() , Bitmap.Config.ARGB_8888);
+				bm = Bitmap.createBitmap(pdfPage.getWidth() , pdfPage.getHeight() , Config.ARGB_8888);
 				// PDFをレンダリングする前にBitmapを白く塗る。
 				Canvas canvas = new Canvas(bm);
 				canvas.drawColor(Color.WHITE);
@@ -3883,7 +3886,7 @@ public class ImageManager extends InputStream implements Runnable {
 		//PdfRenderer.Pageの情報を使って空の描画用Bitmapインスタンスを作成する。
 		if(debug){Log.d("ImageManager", "LoadPdfImageData: BitmapSize pdfPage.getWidth()=" + pdfPage.getWidth() + ", pdfPage.getHeight()=" + pdfPage.getHeight() + ", " + mFileList[page].name);}
 		if(debug){Log.d("ImageManager", "LoadPdfImageData: BitmapSize  mFileList[page].width=" + mFileList[page].o_width + ", mFileList[page].height =" + mFileList[page].o_height + ", " + mFileList[page].name);}
-		Bitmap bm = Bitmap.createBitmap(mFileList[page].o_width , mFileList[page].o_height , Bitmap.Config.ARGB_8888);
+		Bitmap bm = Bitmap.createBitmap(mFileList[page].o_width , mFileList[page].o_height , Config.ARGB_8888);
 		// PDFをレンダリングする前にBitmapを白く塗る。
 		Canvas canvas = new Canvas(bm);
 		canvas.drawColor(Color.WHITE);
@@ -3938,7 +3941,7 @@ public class ImageManager extends InputStream implements Runnable {
 		BitmapFactory.Options option = new BitmapFactory.Options();
 		Bitmap bm = null;
 		option.inJustDecodeBounds = false;
-		option.inPreferredConfig = Config.RGB_565;
+		option.inPreferredConfig = Config.ARGB_8888;
 		option.inSampleSize = mFileList[page].scale;
 
 		ImageData id = null;
@@ -4152,6 +4155,12 @@ public class ImageManager extends InputStream implements Runnable {
 				}
 			}
 		}
+	}
+
+	static int	loupemode;
+
+	public static void setloupemode(int mode)	{
+		loupemode = mode;
 	}
 
 	public boolean ImageScalingSync(int page1, int page2, int half1, int half2, ImageData img1, ImageData img2) {
@@ -4405,16 +4414,34 @@ public class ImageManager extends InputStream implements Runnable {
 		}
 
 		if (img1 != null) {
-			img1.CutLeft = left[0];
-			img1.CutRight = right[0];
-			img1.CutTop = top[0];
-			img1.CutBottom = bottom[0];
+			if	(loupemode >= 3)	{
+				img1.CutLeft = left[0];
+				img1.CutRight = right[0];
+				img1.CutTop = top[0];
+				img1.CutBottom = bottom[0];
+			}
+			else	{
+				//	ルーペ表示の拡大率が元画像サイズの場合はカットしない
+				img1.CutLeft = 0;
+				img1.CutRight = 0;
+				img1.CutTop = 0;
+				img1.CutBottom = 0;
+			}
 		}
 		if (img2 != null) {
-			img2.CutLeft = left[1];
-			img2.CutRight = right[1];
-			img2.CutTop = top[1];
-			img2.CutBottom = bottom[1];
+			if	(loupemode >= 3)	{
+				img2.CutLeft = left[1];
+				img2.CutRight = right[1];
+				img2.CutTop = top[1];
+				img2.CutBottom = bottom[1];
+			}
+			else	{
+				//	ルーペ表示の拡大率が元画像サイズの場合はカットしない
+				img2.CutLeft = 0;
+				img2.CutRight = 0;
+				img2.CutTop = 0;
+				img2.CutBottom = 0;
+			}
 		}
 
 
@@ -4806,7 +4833,7 @@ public class ImageManager extends InputStream implements Runnable {
 						//ページ番号を指定してPdfRenderer.Pageインスタンスを取得する。
 						PdfRenderer.Page pdfPage = mPdfRenderer.openPage(page);
 						//PdfRenderer.Pageの情報を使って空の描画用Bitmapインスタンスを作成する。
-						Bitmap bm = Bitmap.createBitmap(pdfPage.getWidth() , pdfPage.getHeight() , Bitmap.Config.ARGB_8888);
+						Bitmap bm = Bitmap.createBitmap(pdfPage.getWidth() , pdfPage.getHeight() , Config.ARGB_8888);
 						// PDFをレンダリングする前にBitmapを白く塗る。
 						Canvas canvas = new Canvas(bm);
 						canvas.drawColor(Color.WHITE);
