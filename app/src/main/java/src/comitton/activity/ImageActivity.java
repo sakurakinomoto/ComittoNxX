@@ -399,7 +399,7 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 	private boolean mTopMode = false; // トップ操作モード
 	private boolean mPinchOn = false;
 	private boolean mPinchDown = false;
-	private int mPinchScale = 100;
+	private int mPinchScale;
 	private int mPinchScaleSel;
 	private int mPinchCount;
 	private long mPinchTime;
@@ -643,7 +643,7 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 		saveLastFile();
 
 		mRestorePage = mSharedPreferences.getInt(DEF.createUrl(mFilePath, mUser, mPass), -1);
-		mCurrentPage = mRestorePage != -1 ? mRestorePage : 0;
+		mCurrentPage = mRestorePage != -1 ? mRestorePage % 100000 : 0;
 		mImageView.setOnTouchListener(this);
 
 		// プログレスダイアログ準備
@@ -1807,7 +1807,12 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 		}
 		// モードが変わればスケールは初期化
 		if (scaleinit) {
-			mPinchScale = mImgScale;
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+			synchronized (mImageView) {
+				mPinchScale = SetImageActivity.getPinScale(sharedPreferences);
+				mImageMgr.setImageScale(mPinchScale);
+				ImageScaling();
+			}
 		}
 	}
 
@@ -1904,7 +1909,7 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
     					if (mPinchCount == 2) {
     						// 100%にする
     						// 任意スケーリング変更中
-    						mPinchScaleSel = mImgScale;
+    						mPinchScaleSel = mPinchScale;
     						mImageView.setPinchChanging(mPinchScaleSel);
     						mGuideView.setGuideText(mPinchScaleSel + "%");
     					}
@@ -2017,6 +2022,11 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
     					}
     					this.updateOverSize(true);
     					mImageView.update(true);
+
+						Editor ed = mSharedPreferences.edit();
+						ed.putString(DEF.KEY_PinchScale, Integer.toString(mPinchScale));
+						ed.commit();
+
     				}
     			}
     			return true;
@@ -4080,6 +4090,8 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 			mGray = SetImageActivity.getGray(sharedPreferences);
 			mMoire = SetImageActivity.getMoire(sharedPreferences);
 			mTopSingle = SetImageActivity.getTopSingle(sharedPreferences);
+			mPinchScale = SetImageActivity.getPinScale(sharedPreferences);
+			mPinchScaleSel = mPinchScale;
 
 			mScrlRngW = DEF.calcScrlRange(SetImageDetailActivity.getScrlRngW(sharedPreferences));
 			mScrlRngH = DEF.calcScrlRange(SetImageDetailActivity.getScrlRngH(sharedPreferences));
@@ -4105,7 +4117,8 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 				}
 			}
 
-			mLoupeSize = SetImageDetailActivity.getLoupeSize(sharedPreferences);
+			mLoupeSize = SetImageActivity.getZoomType(sharedPreferences);
+			ImageManager.setloupemode(mLoupeSize);
 
 			mNoiseScrl = DEF.calcScrlSpeedPix(SetNoiseActivity.getNoiseScrl(sharedPreferences), mSDensity);
 			mNoiseUnder = DEF.calcNoiseLevel(SetNoiseActivity.getNoiseUnder(sharedPreferences));
@@ -4653,21 +4666,19 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 			SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 			Editor ed = sp.edit();
 			int savePage = mCurrentPage;
-
-			if (mImageMgr.length() <= mCurrentPage + 1) {
-				// 既読
-				savePage = -2;
+			int	maxpage;
+			maxpage = mSharedPreferences.getInt(DEF.createUrl(mFilePath, mUser, mPass), -1);
+			//	未読の場合と未読で無かった場合で場合分けする
+			if	(maxpage > 0)	{
+				//	未読で無かった場合は現在ページ情報のみを更新する
+				maxpage = maxpage / 100000;
+				ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), savePage + maxpage * 100000);
+				ed.commit();
+			} else {
+				//	未読の場合は現在ページ情報のみを更新する(最大ページ数はupdateListView()で補完する)
+				ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), savePage);
+				ed.commit();
 			}
-			else if (mCurrentPageDual && mImageMgr.length() <= mCurrentPage + 2) {
-				// 見開きの場合は1ページ前でも既読
-				savePage = -2;
-			}
-			else if (savePage < 0) {
-				// 範囲外は読み込みしない
-				savePage = 0;
-			}
-			ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), savePage);
-			ed.commit();
 		}
 	}
 
@@ -4680,7 +4691,9 @@ public class ImageActivity extends AppCompatActivity implements OnTouchListener,
 				ed.remove(DEF.createUrl(mFilePath, mUser, mPass));
 			}
 			else {
-				ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), mRestorePage);
+				int	maxpage;
+				maxpage = mSharedPreferences.getInt(DEF.createUrl(mFilePath, mUser, mPass), -1) / 100000;
+				ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), mRestorePage + maxpage * 100000);
 			}
 			ed.commit();
 		}
