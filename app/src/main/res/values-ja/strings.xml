@@ -417,6 +417,7 @@
     <string name="pnumpos05">右下</string>
     <string name="pnumcolor00">白</string>
     <string name="pnumcolor01">黒</string>
+    <string name="pagefontsize">フォントサイズ(%)</string>
     <string name="lastpage00">画面を閉じる</string>
     <string name="lastpage01">確認ダイアログの表示</string>
     <string name="lastpage02">次のファイルを表示</string>
