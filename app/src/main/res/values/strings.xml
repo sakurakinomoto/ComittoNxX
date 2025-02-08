@@ -417,6 +417,7 @@
     <string name="pnumpos05">Bottom Left</string>
     <string name="pnumcolor00">White</string>
     <string name="pnumcolor01">Black</string>
+    <string name="pagefontsize">Font Size(%)</string>
     <string name="lastpage00">Close viewer</string>
     <string name="lastpage01">Display a confirmation</string>
     <string name="lastpage02">Move to next file</string>
