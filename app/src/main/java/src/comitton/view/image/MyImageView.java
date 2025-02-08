@@ -212,7 +212,7 @@ public class MyImageView extends SurfaceView implements SurfaceHolder.Callback, 
 					break;
 				}
 				else {
-					if	(mThreadWaitLoop < 100)	{
+					if	(mThreadWaitLoop < 1000)	{
 						mThreadWaitLoop++;
 						update(false);
 					}
