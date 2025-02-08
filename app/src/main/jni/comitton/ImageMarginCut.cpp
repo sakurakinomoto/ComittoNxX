@@ -88,10 +88,10 @@ int GetModeColor(int Page, int Half, int Index, int SclWidth, int SclHeight, int
     int		xx;	// サイズ変更後のx座標
     int		yy;	// サイズ変更後のy座標
 
-    std::vector<WORD> ColorVectorL(OrgHeight);
-    std::vector<WORD> ColorVectorR(OrgHeight);
-    std::vector<WORD> ColorVectorT(OrgWidth);
-    std::vector<WORD> ColorVectorB(OrgWidth);
+    std::vector<LONG> ColorVectorL(OrgHeight);
+    std::vector<LONG> ColorVectorR(OrgHeight);
+    std::vector<LONG> ColorVectorT(OrgWidth);
+    std::vector<LONG> ColorVectorB(OrgWidth);
 
     // 上下左右の端のラインの色の最頻値を調べる
     // 配列に左右端のラインの色を代入
