@@ -22,6 +22,8 @@ public class PageNumberPreference extends DialogPreference implements SeekBar.On
 	private TextView mTextSize;
 	private SeekBar mSeekSize;
 	private Spinner mSpinColor;
+	private TextView mPageFontSize;
+	private String mPageFontSizeStr;
 
 	private String mDots;
 
@@ -54,6 +56,10 @@ public class PageNumberPreference extends DialogPreference implements SeekBar.On
 		int size = getSizeValue();
 		mSpinColor.setSelection(getColorValue());
 //		mTextSize.setText(DEF.getPnumSizeStr(size), );
+
+		mPageFontSize = (TextView)root.findViewById(R.id.label_page_font);
+		mPageFontSizeStr = mPageFontSize.getText().toString();
+		SetPageFontSize(size);
 		mSeekSize.setProgress(size);
 		return root;
 	}
@@ -83,6 +89,10 @@ public class PageNumberPreference extends DialogPreference implements SeekBar.On
 		ed.putInt(DEF.KEY_PNUMSIZE, size);
 		ed.putInt(DEF.KEY_PNUMCOLOR, color);
 		ed.commit();
+	}
+
+	private void SetPageFontSize(int size)	{
+		mPageFontSize.setText(mPageFontSizeStr.replaceAll("%", String.valueOf(size + 6)));
 	}
 
 	private boolean getDispValue() {
@@ -117,6 +127,7 @@ public class PageNumberPreference extends DialogPreference implements SeekBar.On
 	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 		// 変更通知
 		mTextSize.setText(DEF.getPnumSizeStr(progress, mDots));
+		SetPageFontSize(progress);
 	}
 
 	@Override
