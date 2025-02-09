@@ -87,6 +87,15 @@
 				android:textColor="#FFFFFFFF" />
 		</LinearLayout>
 
+		<TextView
+			android:id="@+id/label_page_font"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_marginLeft="20sp"
+			android:layout_marginRight="20sp"
+			android:layout_gravity="left"
+			android:text="@string/pagefontsize" />
+
 		<SeekBar
 			android:id="@+id/seek_size"
 			style="@style/PageSeekBar"
