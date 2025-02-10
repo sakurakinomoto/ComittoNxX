@@ -83,6 +83,7 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
 
 	private static int mAscMode;	// 半角の表示方法
 	private static String mFontFile;
+	private static boolean mChangeTextSize = false;
 
 	public FileSelectList(Handler handler, AppCompatActivity activity, SharedPreferences sp) {
 		mActivityHandler = handler;
@@ -202,6 +203,11 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
 		manager.formatTextFile(mTextWidth, mTextHeight, mHeadSize, mBodySize, mRubiSize, mSpaceW, mSpaceH, mMarginW, mMarginH, mPicSize, mFontFile, mAscMode);
 	}
 
+	public static void ChangeTextSize()
+	{
+		mChangeTextSize = true;
+	}
+
 	@Override
 	public void run() {
 		boolean flag = false;
@@ -291,7 +297,7 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
                     if	(state > 0)	{
 						nowdate = mSp.getInt(DEF.createUrl(mUri + mPath + name + "/date", mUser, mPass),  DEF.PAGENUMBER_UNREAD);
 						date = fileList.get(i).getDate();
-						if (nowdate != ((date / 1000)))	{
+						if ((nowdate != ((date / 1000))) || (mChangeTextSize))	{
 							int openmode = 0;
 							// ファイルリストの読み込み
 							openmode = ImageManager.OPENMODE_TEXTVIEW;
@@ -304,25 +310,25 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
 							ed.commit();
 							ed.putInt(DEF.createUrl(mUri + mPath + name + "/date", mUser, mPass), (int)((date / 1000)));
 							ed.commit();
-							state = state % 100000;
+							state = state % 100000 + 1;
 							if (mTextMgr.length() == 0) {
 								state = -1;
-							} else if (state >= (mTextMgr.length() - 1)) {
+							} else if (state >= mTextMgr.length()) {
 								state = -2;
 							}
-							size = mTextMgr.length() - 1;
+							size = mTextMgr.length();
 						}
 						else	{
 							long maxpage = state / 100000;
-							state = state % 100000;
+							state = state % 100000 + 1;
 							if (maxpage == 0) {
 								state = -1;
 								size = 0;
-							} else if (state >= (maxpage - 1)) {
+							} else if (state >= maxpage) {
 								state = -2;
-								size = maxpage - 1;
+								size = maxpage;
 							} else {
-								size = maxpage - 1;
+								size = maxpage;
 							}
 						}
 						fileList.get(i).setSize(size);
@@ -379,7 +385,7 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
 	                    if	(state > 0)	{
 							nowdate = mSp.getInt(DEF.createUrl(mUri + mPath + name + "/date", mUser, mPass),  DEF.PAGENUMBER_UNREAD);
 							date = fileList.get(i).getDate();
-							if (nowdate != ((date / 1000)))	{
+							if ((nowdate != ((date / 1000))) || (mChangeTextSize))	{
 								int openmode = 0;
 								// ファイルリストの読み込み
 								openmode = ImageManager.OPENMODE_TEXTVIEW;
@@ -423,7 +429,7 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
 	                    if	(state > 0)	{
 							nowdate = mSp.getInt(DEF.createUrl(mUri + mPath + name + "/date", mUser, mPass),  DEF.PAGENUMBER_UNREAD);
 							date = fileList.get(i).getDate();
-							if (nowdate != ((date / 1000)))	{
+							if ((nowdate != ((date / 1000))) || (mChangeTextSize))	{
 								int openmode = 0;
 								// ファイルリストの読み込み
 								openmode = ImageManager.OPENMODE_TEXTVIEW;
@@ -516,6 +522,7 @@ public class FileSelectList implements Runnable, Callback, DialogInterface.OnDis
 					return;
 				}
 			}
+			mChangeTextSize = false;
 		}
 		catch (Exception e) {
 			String s = null;
