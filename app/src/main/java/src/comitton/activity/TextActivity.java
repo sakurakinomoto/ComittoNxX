@@ -2270,7 +2270,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 			}
 			case DEF.MENU_SETTING: {
 				// 設定画面に遷移
-				mCurrentPageRate = (float)mCurrentPage / mTextMgr.length();
+				mCurrentPageRate = (float)(mCurrentPage + 1) / mTextMgr.length();
 				Intent intent = new Intent(TextActivity.this, SetConfigActivity.class);
 				startActivityForResult(intent, DEF.REQUEST_SETTING);
 				break;
@@ -2303,7 +2303,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 			case DEF.MENU_ADDBOOKMARK: {
 				// ブックマーク追加ダイアログ表示
 				mCurrentPage = mTextView.getPage(); // 現在ページ取得
-				mCurrentPageRate = (float)mCurrentPage / mTextMgr.length();
+				mCurrentPageRate = (float)(mCurrentPage + 1) / mTextMgr.length();
 
 				BookmarkDialog bookmarkDlg = new BookmarkDialog(this, R.style.MyDialog);
 				bookmarkDlg.setBookmarkListear(this);
@@ -2399,7 +2399,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 
 	// テキスト設定用ダイアログ表示
 	private void showTextConfigDialog() {
-		mCurrentPageRate = (float)mCurrentPage / mTextMgr.length();
+		mCurrentPageRate = (float)(mCurrentPage + 1) / mTextMgr.length();
 		if (mTextConfigDialog != null) {
 			return;
 		}
@@ -2467,6 +2467,11 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 					ed.putInt(DEF.KEY_TX_MARGINH, mMarginHOrg);
 					ed.putInt(DEF.KEY_TX_ASCMODE, mAscMode);
 					ed.commit();
+				}
+				if	((ischange) && (issave))	{
+					// テキスト表示設定が変更されたら通知
+					FileSelectList.ChangeTextSize();
+					FileSelectActivity.ChangeTextSize();
 				}
 			}
 
@@ -3042,38 +3047,23 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
 		Editor ed = sp.edit();
 		int savePage = mCurrentPage;
-		float savePageRate = (float)mCurrentPage / mTextMgr.length();
 		if (mTextMgr.length() <= mCurrentPage + 1) {
 			// 既読
-			savePageRate = (float)DEF.PAGENUMBER_READ;
 		}
 		else if (mDispMode == DEF.DISPMODE_TX_DUAL && mTextMgr.length() <= mCurrentPage + 2) {
 			// 見開きの場合は1ページ前でも既読
-			savePageRate = (float)DEF.PAGENUMBER_READ;
 		}
 		else if (savePage < 0) {
 			// 範囲外は読み込みしない
 			savePage = 0;
-			savePageRate = 0f;
 		}
-		long state;
-		long maxpage;
+		long maxpage = mTextMgr.length();
 		if	(mTextName.equals("META-INF/container.xml"))	{
-	        state = mSharedPreferences.getInt(DEF.createUrl(mFilePath, mUser, mPass), DEF.PAGENUMBER_UNREAD);
-			Log.d("TextActivity","mFilePath=" + mFilePath + ", savePage=" + savePage + ", state=" + state);
-	        maxpage = state / 100000;
-	        if	(maxpage == 0)	{
-				maxpage = mTextMgr.length();
-			}
+			Log.d("TextActivity","mFilePath=" + mFilePath + ", savePage=" + savePage);
 			ed.putInt(DEF.createUrl(mFilePath, mUser, mPass), (int)(maxpage * 100000 + savePage));
 		}
 		else	{
-	        state = mSharedPreferences.getInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), DEF.PAGENUMBER_UNREAD);
-			Log.d("TextActivity","mFilePath=" + mFilePath + ", mTextName=" + mTextName + ", savePage=" + savePage + ", state=" + state);
-	        maxpage = state / 100000;
-	        if	(maxpage == 0)	{
-				maxpage = mTextMgr.length();
-			}
+			Log.d("TextActivity","mFilePath=" + mFilePath + ", mTextName=" + mTextName + ", savePage=" + savePage);
 			ed.putInt(DEF.createUrl(mFilePath + mTextName, mUser, mPass), (int)(maxpage * 100000 + savePage));
 		}
 		ed.commit();
@@ -3099,7 +3089,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 		if (mReadBreak == false && mTextMgr != null && mTextView != null) {
 			int type = (mFileName == null || mFileName.length() == 0) ? RecordItem.TYPE_TEXT : RecordItem.TYPE_COMPTEXT;
 			mCurrentPage = mTextView.getPage();
-			mCurrentPageRate = (float)mCurrentPage / mTextMgr.length();
+			mCurrentPageRate = (float)(mCurrentPage + 1) / mTextMgr.length();
 			RecordList.add(RecordList.TYPE_HISTORY, type, mServer, mLocalPath + mFileName
 					, mTextName, new Date().getTime(), null, 0, mCurrentPageRate, mCurrentPage, null);
 
@@ -3132,7 +3122,7 @@ public class TextActivity extends AppCompatActivity implements OnTouchListener, 
 	public void onAddBookmark(String name) {
 		// ブックマーク追加
 		int type = (mFileName == null || mFileName.length() == 0) ? RecordItem.TYPE_TEXT : RecordItem.TYPE_COMPTEXT;
-		mCurrentPageRate = (float)mCurrentPage / mTextMgr.length();
+		mCurrentPageRate = (float)(mCurrentPage + 1) / mTextMgr.length();
 		RecordList.add(RecordList.TYPE_BOOKMARK, type, mServer, mLocalPath + mFileName
 				, mTextName, new Date().getTime(), null, 0, mCurrentPageRate, mCurrentPage, name);
 	}

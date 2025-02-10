@@ -57,6 +57,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.DialogInterface;
@@ -97,6 +98,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -250,6 +252,10 @@ public class FileSelectActivity extends AppCompatActivity implements OnTouchList
 	private int mInitialize = 0;
 
 	private StorageManager mStorageManager;
+
+	private ProgressDialog mReadDialog;
+	private String mReadingMsg[];
+	private static boolean mChangeTextSize = false;
 
 	private static final int REQUEST_CODE = 1;
 
@@ -579,6 +585,25 @@ public class FileSelectActivity extends AppCompatActivity implements OnTouchList
 			// お知らせ表示
 			mInformation.showNotice();
 		}
+
+		Resources res = getResources();
+		mReadingMsg = new String[4];
+		mReadingMsg[0] = res.getString(R.string.textParsing);
+
+		// プログレスダイアログ準備
+		mReadDialog = new ProgressDialog(this, R.style.MyDialog);
+		mReadDialog.setMessage(mReadingMsg[0]);
+		mReadDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		mReadDialog.setCancelable(true);
+		mReadDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+			@Override
+			public void onShow(DialogInterface dialog) {
+				int uiOptions = getWindow().getDecorView().getSystemUiVisibility();
+				uiOptions |= View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
+				uiOptions |= View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY;
+				getWindow().getDecorView().setSystemUiVisibility(uiOptions);
+			}
+		});
 	}
 
 	@Override
@@ -2020,6 +2045,11 @@ public class FileSelectActivity extends AppCompatActivity implements OnTouchList
 		mLoadListNextOpen = -1;
 	}
 
+	public static void ChangeTextSize()
+	{
+		mChangeTextSize = true;
+	}
+
 	/**
 	 * ファイルリストの再読み込み
 	 */
@@ -2045,6 +2075,19 @@ public class FileSelectActivity extends AppCompatActivity implements OnTouchList
 
 		mListScreenView.mFileListArea.setThumbnailId(0);
 
+		synchronized (this) {
+			if	(mReadDialog != null)	{
+				if	(mChangeTextSize)	{
+					// プログレスダイアログを表示
+					mReadDialog.show();
+					// テキスト解析中の表示
+					String str = "";
+					str = mReadingMsg[0];
+					mReadDialog.setMessage(str);
+				}
+			}
+		}
+
 		// ファイルリスト取得(非同期)
 		mFileList.loadFileList();
 
@@ -2064,6 +2107,16 @@ public class FileSelectActivity extends AppCompatActivity implements OnTouchList
 	private void loadListViewAfter() {
 		// 読み込み中フラグOFF
 		mIsLoading = false;
+
+		synchronized (this) {
+			if	(mReadDialog != null)	{
+				if	(mChangeTextSize)	{
+					// プログレスダイアログを消去
+					mReadDialog.dismiss();
+					mChangeTextSize = false;
+				}
+			}
+		}
 
 		// リストの内容設定
 		if (mFileList.getFileList() != null) {
@@ -2148,15 +2201,15 @@ public class FileSelectActivity extends AppCompatActivity implements OnTouchList
 							ed = mSharedPreferences.edit();
 							ed.putInt(DEF.createUrl(path + name, user, pass), state + maxpage * 100000);
 							ed.commit();
-							if (state >= (maxpage - 1)) {
+							if (state >= maxpage) {
 								//	最大ページ数に達した場合は既読にする
 								state = -2;
 							}
-						} else if (state >= (maxpage - 1))	{
+						} else if (state >= maxpage)	{
 							//	最大ページ数に達した場合は既読にする
 							state = -2;
 						}
-						data.setSize(maxpage - 1);
+						data.setSize(maxpage);
 					}
 					data.setState(state);
 				}
