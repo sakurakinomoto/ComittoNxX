@@ -409,6 +409,20 @@ public class FileListArea extends ListArea implements Handler.Callback {
 						mSrcRect.set(0, 0, dstWidth, dstHeight);
 						mDstRect.set(x + dstX, y + dstY, x + dstX + (int)(dstWidth * dsMin), y + dstY + (int)(dstHeight * dsMin));
 						canvas.drawBitmap(bm, mSrcRect, mDstRect, mBitmapPaint);
+						if ((fd.getState() >= 0) && (fd.getSize() > 0)) {
+							String str = (int)((double)fd.getState() / (double)fd.getSize() * 100) + "%";
+							int loadingSize = Math.min(mIconWidth, mIconHeight) / 5;
+							mBitmapPaint.setTextSize(loadingSize);
+							mBitmapPaint.setStyle(Paint.Style.STROKE);
+							mBitmapPaint.setStrokeWidth(2.0f); 
+							mBitmapPaint.setColor(Color.DKGRAY);
+							int text_x = x + mIconWidth - loadingSize;
+							int text_y = y + (mIconHeight + loadingSize) / 2 - loadingSize / 4;
+							canvas.drawText(str, text_x, text_y, mBitmapPaint);
+							mBitmapPaint.setStyle(Paint.Style.FILL);
+							mBitmapPaint.setColor(color);
+							canvas.drawText(str, text_x, text_y, mBitmapPaint);
+						}
 					}
 				}else{ // タイル表示・サムネ無しの場合は枠で囲む
 					canvas.drawRect(baseX + mDrawLeft + ix * mItemWidth + mItemMargin, y + mIconHeight,
@@ -748,6 +762,21 @@ public class FileListArea extends ListArea implements Handler.Callback {
 					mSrcRect.set(0, 0, dstWidth, dstHeight);
 					mDstRect.set(x + dstX, y + dstY, x + dstX + (int)(dstWidth * dsMin), y + dstY + (int)(dstHeight * dsMin));
 					canvas.drawBitmap(bm, mSrcRect, mDstRect, mBitmapPaint);
+					if ((fd.getState() >= 0) && (fd.getSize() > 0)) {
+						String str = (int)((double)fd.getState() / (double)fd.getSize() * 100) + "%";
+						int loadingSize = Math.min(dstX + dstWidth, iconHeight) / 5;
+						mBitmapPaint.setTextSize(loadingSize);
+						mBitmapPaint.setStyle(Paint.Style.STROKE);
+						mBitmapPaint.setStrokeWidth(2.0f); 
+						mBitmapPaint.setColor(Color.DKGRAY);
+						int text_x = x + iconWidth - loadingSize;
+						int text_y = y + (iconHeight + loadingSize) / 2 - loadingSize / 4;
+
+						canvas.drawText(str, text_x, text_y, mBitmapPaint);
+						mBitmapPaint.setStyle(Paint.Style.FILL);
+						mBitmapPaint.setColor(color);
+						canvas.drawText(str, text_x, text_y, mBitmapPaint);
+					}
 				}
 				// タイトルはアイコンの右側に表示
                 x += iconWidth + mItemMargin;
